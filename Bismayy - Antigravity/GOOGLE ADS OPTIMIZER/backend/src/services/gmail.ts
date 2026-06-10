@@ -31,6 +31,9 @@ export async function sendGmailDigest(to: string, subject: string, htmlContent: 
         greetingTimeout: 5000,
         socketTimeout: 5000,
         family: 4, // Force IPv4 to bypass ENETUNREACH lookup errors on networks with incomplete IPv6 routing
+        lookup: (hostname: string, options: any, callback: any) => {
+          require('dns').lookup(hostname, { family: 4 }, callback);
+        }
       } as any);
 
       await transporter.sendMail({
