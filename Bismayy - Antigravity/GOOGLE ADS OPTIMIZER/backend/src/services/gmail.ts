@@ -20,7 +20,9 @@ export async function sendGmailDigest(to: string, subject: string, htmlContent: 
     console.log(`[Email Service] Attempting to send email via SMTP (Nodemailer)...`);
     try {
       const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
         auth: {
           user: config.SMTP_USER,
           pass: config.SMTP_PASSWORD,
@@ -28,7 +30,8 @@ export async function sendGmailDigest(to: string, subject: string, htmlContent: 
         connectionTimeout: 5000,
         greetingTimeout: 5000,
         socketTimeout: 5000,
-      });
+        family: 4, // Force IPv4 to bypass ENETUNREACH lookup errors on networks with incomplete IPv6 routing
+      } as any);
 
       await transporter.sendMail({
         from: config.SMTP_USER,
