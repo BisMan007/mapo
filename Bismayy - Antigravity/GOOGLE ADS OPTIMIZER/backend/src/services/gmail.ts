@@ -56,7 +56,7 @@ export async function sendGmailDigest(to: string, subject: string, htmlContent: 
       refresh_token: config.GOOGLE_ADS_REFRESH_TOKEN,
     });
 
-    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client, timeout: 10000 });
 
     // Compose SMTP message structure
     const messageParts = [
