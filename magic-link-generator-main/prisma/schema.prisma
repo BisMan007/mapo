@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SubmissionStatus {
+  PENDING
+  CONFIRMED
+}
+
+model Submission {
+  id            String           @id @default(cuid())
+  email         String           @unique
+  name          String
+  companyName   String
+  linkedinUrl   String
+  documentName  String?
+  status        SubmissionStatus @default(PENDING)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  tokens        MagicLinkToken[]
+}
+
+model MagicLinkToken {
+  id           String     @id @default(cuid())
+  submissionId String
+  tokenHash    String     @unique
+  expiresAt    DateTime
+  usedAt       DateTime?
+  createdAt    DateTime   @default(now())
+
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@index([expiresAt])
+  @@index([submissionId])
+}

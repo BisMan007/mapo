@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Environment Secrets (DO NOT COMMIT SECRETS)
+.env
+backend/.env
+.env.txt
+
+# Production builds
+dist/
+backend/dist/
+frontend/dist/
+
+# SQLite databases
+backend/data/*.db
+backend/data/*.db-journal
+
+# Editor and OS junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
