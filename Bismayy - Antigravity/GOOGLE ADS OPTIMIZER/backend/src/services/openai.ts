@@ -53,14 +53,37 @@ export async function generateCopyBrainstorm(prompt: string): Promise<string> {
   }
 }
 
+function extractKeywords(prompt: string): string {
+  const stopwords = new Set([
+    'a', 'an', 'the', 'and', 'or', 'but', 'if', 'then', 'else', 'for', 'with',
+    'about', 'against', 'between', 'into', 'through', 'during', 'before',
+    'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out',
+    'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once',
+    'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both',
+    'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor',
+    'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't',
+    'can', 'will', 'just', 'don', 'should', 'now', 'generate', 'image', 'creative',
+    'showing', 'representing', 'ad', 'advertisement', 'for', 'called', 'with', 'picture', 'photo'
+  ]);
+  
+  const words = prompt
+    .toLowerCase()
+    .replace(/[^\w\s]/g, '')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !stopwords.has(w));
+    
+  if (words.length === 0) return 'marketing';
+  return words.slice(0, 3).join(',');
+}
+
 /**
  * Generates an image using OpenAI DALL-E 3
  */
 export async function generateOpenAIImage(prompt: string): Promise<string> {
   if (config.MOCK_MODE || !openaiClient) {
     console.log(`[MOCK OPENAI] Generating DALL-E image for prompt: "${prompt}"`);
-    // Return a beautiful abstract placeholder image from Unsplash
-    return 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop';
+    const keywords = extractKeywords(prompt);
+    return `https://loremflickr.com/800/800/${encodeURIComponent(keywords)}`;
   }
 
   try {

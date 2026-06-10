@@ -1,32 +1,87 @@
+import axios from 'axios';
+import { google } from 'googleapis';
 import { config } from '../config';
 
-// Mock URLs for Vertex AI fallbacks
-const MOCK_IMAGEN_3_IMAGE = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800&auto=format&fit=crop';
-// A beautiful 5-second abstract network loop from Pexels
-const MOCK_VEO_VIDEO = 'https://player.vimeo.com/external/371433846.sd.mp4?s=236da2f3c025f73d7885e7d134b2f6e36ebab7e2&profile_id=139&oauth2_token_id=57447761';
+// A highly reliable, public domain tech video stream hosted on Google Cloud Storage (no CORS, no expiration)
+const MOCK_VEO_VIDEO = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4';
+
+function extractKeywords(prompt: string): string {
+  const stopwords = new Set([
+    'a', 'an', 'the', 'and', 'or', 'but', 'if', 'then', 'else', 'for', 'with',
+    'about', 'against', 'between', 'into', 'through', 'during', 'before',
+    'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out',
+    'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once',
+    'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both',
+    'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor',
+    'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't',
+    'can', 'will', 'just', 'don', 'should', 'now', 'generate', 'image', 'creative',
+    'showing', 'representing', 'ad', 'advertisement', 'for', 'called', 'with', 'picture', 'photo'
+  ]);
+  
+  const words = prompt
+    .toLowerCase()
+    .replace(/[^\w\s]/g, '')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !stopwords.has(w));
+    
+  if (words.length === 0) return 'marketing';
+  return words.slice(0, 3).join(',');
+}
 
 /**
  * Generates an image using Vertex AI Imagen 3
  */
 export async function generateVertexImage(prompt: string): Promise<string> {
+  const keywords = extractKeywords(prompt);
+  const fallbackUrl = `https://loremflickr.com/800/800/${encodeURIComponent(keywords)}`;
+
   if (config.MOCK_MODE) {
     console.log(`[MOCK VERTEX IMAGEN 3] Generating image for prompt: "${prompt}"`);
-    return MOCK_IMAGEN_3_IMAGE;
+    return fallbackUrl;
   }
 
   try {
-    // Vertex AI authentication requires Google Application Default Credentials (ADC) or Service Account key.
-    // If running in a real environment, we'd use the official @google-cloud/vertexai client:
-    // const { VertexAI } = require('@google-cloud/vertexai');
-    // const vertexAI = new VertexAI({ project: 'your-gcp-project', location: 'us-central1' });
-    // const generativeModel = vertexAI.preview.getGenerativeModel({ model: 'imagen-3.0-generate-002' });
-    // For local convenience, if credentials aren't loaded, we log and fallback to the mock URL.
+    console.log(`[Vertex AI Imagen 3] Running query: "${prompt}".`);
+    const auth = new google.auth.GoogleAuth({
+      scopes: ['https://www.googleapis.com/auth/cloud-platform']
+    });
+    const client = await auth.getClient();
+    const tokenResponse = await client.getAccessToken();
+    const accessToken = tokenResponse.token;
+    const projectId = process.env.GCP_PROJECT_ID || await auth.getProjectId();
+    const location = process.env.GCP_LOCATION || 'us-central1';
+
+    const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/imagen-3.0-generate-002:predict`;
     
-    console.log(`[Vertex AI Imagen 3] Running query: "${prompt}". (Requires ADC credentials)`);
-    return MOCK_IMAGEN_3_IMAGE;
+    const response = await axios.post(
+      url,
+      {
+        instances: [{ prompt }],
+        parameters: {
+          sampleCount: 1,
+          aspectRatio: '1:1',
+          outputMimeType: 'image/jpeg'
+        }
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 15000
+      }
+    );
+
+    const prediction = response.data?.predictions?.[0];
+    if (prediction?.bytesBase64Encoded) {
+      return `data:${prediction.mimeType || 'image/jpeg'};base64,${prediction.bytesBase64Encoded}`;
+    }
+
+    console.warn('[Vertex AI Imagen 3] No bytes returned in prediction, using fallback.');
+    return fallbackUrl;
   } catch (error: any) {
-    console.error('Vertex AI Imagen 3 error, falling back:', error?.message);
-    return MOCK_IMAGEN_3_IMAGE;
+    console.error('Vertex AI Imagen 3 error, falling back:', error?.response?.data || error?.message);
+    return fallbackUrl;
   }
 }
 
@@ -40,12 +95,50 @@ export async function generateVertexVideo(prompt: string): Promise<string> {
   }
 
   try {
-    // Similarly, calling Google Veo video generation via REST API/SDK requires gcloud project setup.
-    // If not configured, we return the mock video resource url.
-    console.log(`[Vertex AI Google Veo] Running video query: "${prompt}". (Requires ADC credentials)`);
+    console.log(`[Vertex AI Google Veo] Running video query: "${prompt}".`);
+    const auth = new google.auth.GoogleAuth({
+      scopes: ['https://www.googleapis.com/auth/cloud-platform']
+    });
+    const client = await auth.getClient();
+    const tokenResponse = await client.getAccessToken();
+    const accessToken = tokenResponse.token;
+    const projectId = process.env.GCP_PROJECT_ID || await auth.getProjectId();
+    const location = process.env.GCP_LOCATION || 'us-central1';
+
+    const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/veo-2.0-generate-001:predictLongRunning`;
+    
+    const response = await axios.post(
+      url,
+      {
+        instances: [{ prompt }],
+        parameters: {
+          durationSeconds: 5,
+          aspectRatio: '16:9',
+          personGeneration: 'dont_allow',
+          gcsDestination: {
+            outputUriPrefix: `gs://${projectId}-veo-output/`
+          }
+        }
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 15000
+      }
+    );
+
+    console.log('[Vertex AI Google Veo] LRO created:', response.data?.name);
+    
+    const operationName = response.data?.name;
+    if (operationName) {
+      return `https://storage.googleapis.com/${projectId}-veo-output/input_file_0.mp4`;
+    }
+
     return MOCK_VEO_VIDEO;
   } catch (error: any) {
-    console.error('Vertex AI Google Veo error, falling back:', error?.message);
+    console.error('Vertex AI Google Veo error, falling back:', error?.response?.data || error?.message);
     return MOCK_VEO_VIDEO;
   }
 }

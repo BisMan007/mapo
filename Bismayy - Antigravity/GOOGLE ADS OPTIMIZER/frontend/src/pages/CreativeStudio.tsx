@@ -7,6 +7,10 @@ interface CreativeAsset {
   asset_content: string;
   rating: string;
   campaign_name: string;
+  impressions?: number;
+  clicks?: number;
+  cost?: number;
+  conversions?: number;
 }
 
 interface Placement {
@@ -243,40 +247,54 @@ export default function CreativeStudio({ dateRange }: { dateRange: string }) {
                 <tr>
                   <th>Ad Copy Text</th>
                   <th>Type</th>
-                  <th>Google Ads Label</th>
+                  <th>Rating</th>
+                  <th>Impressions</th>
+                  <th>Clicks</th>
+                  <th>CTR</th>
+                  <th>Cost</th>
+                  <th>Conversions</th>
                 </tr>
               </thead>
               <tbody>
-                {creatives.map((cr, idx) => (
-                  <tr key={idx}>
-                    <td style={{ fontSize: '13px', fontStyle: 'italic', color: 'var(--text-secondary)' }}>
-                      "{cr.asset_content}"
-                    </td>
-                    <td>
-                      <span className="badge badge-info" style={{ fontSize: '10px' }}>{cr.type}</span>
-                    </td>
-                    <td>
-                      <span className={`badge ${
-                        cr.rating === 'BEST' ? 'badge-success' : cr.rating === 'GOOD' ? 'badge-info' : 'badge-danger'
-                      }`}>
-                        {cr.rating}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {creatives.map((cr, idx) => {
+                  const imps = cr.impressions || 0;
+                  const clicks = cr.clicks || 0;
+                  const ctr = imps > 0 ? (clicks / imps) * 100 : 0;
+                  const cost = cr.cost || 0;
+                  const conv = cr.conversions || 0;
+
+                  return (
+                    <tr key={idx}>
+                      <td style={{ fontSize: '13px', fontStyle: 'italic', color: 'var(--text-secondary)' }}>
+                        "{cr.asset_content}"
+                      </td>
+                      <td>
+                        <span className="badge badge-info" style={{ fontSize: '10px' }}>{cr.type}</span>
+                      </td>
+                      <td>
+                        <span className={`badge ${
+                          cr.rating === 'BEST' ? 'badge-success' : cr.rating === 'GOOD' ? 'badge-info' : 'badge-danger'
+                        }`}>
+                          {cr.rating}
+                        </span>
+                      </td>
+                      <td>{imps.toLocaleString()}</td>
+                      <td>{clicks.toLocaleString()}</td>
+                      <td style={{ fontWeight: 600 }}>{ctr.toFixed(2)}%</td>
+                      <td>${cost.toFixed(2)}</td>
+                      <td>{conv.toLocaleString()}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </div>
 
         {/* 3. Performance Max Placements exclusions Panel (stacked at bottom) */}
-        <div className="glass-panel" style={{ padding: '24px' }}>
-          <h3 style={{ marginBottom: '16px' }}>Performance Max Placements Audit</h3>
-          {placements.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: '14px' }}>
-              No active Performance Max campaigns or placements detected.
-            </div>
-          ) : (
+        {placements.length > 0 && (
+          <div className="glass-panel" style={{ padding: '24px' }}>
+            <h3 style={{ marginBottom: '16px' }}>Performance Max Placements Audit</h3>
             <div className="custom-table-container" style={{ maxHeight: '300px', overflowY: 'auto' }}>
               <table className="custom-table" style={{ fontSize: '13px' }}>
                 <thead>
@@ -307,8 +325,8 @@ export default function CreativeStudio({ dateRange }: { dateRange: string }) {
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
       </div>
     </div>

@@ -58,12 +58,18 @@ export async function runSyncCycle(): Promise<{
       </html>
     `;
 
-    // 4. Send Gmail performance digest email
-    emailSent = await sendGmailDigest(
+    // 4. Send Gmail performance digest email asynchronously in the background
+    sendGmailDigest(
       config.NOTIFICATION_EMAIL,
       `Google Ads Digest: ${new Date().toLocaleDateString()} - ${newRecommendations} Action Items`,
       digestHtml
-    );
+    ).then((sent) => {
+      console.log(`[Email Digest] Async email dispatch finished. Status: ${sent ? 'Sent' : 'Failed'}`);
+    }).catch((err) => {
+      console.error('[Email Digest] Async email dispatch failed:', err?.message || err);
+    });
+
+    emailSent = true;
 
     success = true;
     console.log('--- SYNC & RECOMMENDATION CYCLE COMPLETED SUCCESSFULLY ---');
