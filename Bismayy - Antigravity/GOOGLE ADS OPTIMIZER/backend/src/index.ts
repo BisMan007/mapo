@@ -83,6 +83,7 @@ app.get('/api/reports/kpis', async (req, res) => {
   try {
     const kpis = await AnalysisAgent.computeGlobalKPIs();
     const syncLog = await db.get('SELECT sync_timestamp FROM report_sync_log ORDER BY id DESC LIMIT 1');
+    const lastSyncIso = syncLog?.sync_timestamp ? new Date(syncLog.sync_timestamp.replace(' ', 'T') + 'Z').toISOString() : 'Never';
     res.json({
       clicks: Math.round(kpis.clicks * scale),
       impressions: Math.round(kpis.impressions * scale),
@@ -91,7 +92,7 @@ app.get('/api/reports/kpis', async (req, res) => {
       ctr: kpis.ctr,
       cpc: kpis.cpc,
       cpa: kpis.cpa,
-      last_sync: syncLog?.sync_timestamp || 'Never'
+      last_sync: lastSyncIso
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -132,7 +133,11 @@ app.post('/api/reports/sync', async (req, res) => {
 app.get('/api/reports/sync-history', async (req, res) => {
   try {
     const history = await db.all('SELECT * FROM report_sync_log ORDER BY id DESC LIMIT 20');
-    res.json(history);
+    const formattedHistory = history.map(h => ({
+      ...h,
+      sync_timestamp: h.sync_timestamp ? new Date(h.sync_timestamp.replace(' ', 'T') + 'Z').toISOString() : h.sync_timestamp
+    }));
+    res.json(formattedHistory);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

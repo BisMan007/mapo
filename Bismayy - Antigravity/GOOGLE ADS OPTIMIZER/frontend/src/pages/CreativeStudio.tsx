@@ -128,153 +128,113 @@ export default function CreativeStudio({ dateRange }: { dateRange: string }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
         
-        {/* Left Column: AI Studio & Placement list */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        {/* 1. AI Creative Studio */}
+        <div className="glass-panel" style={{ padding: '28px' }}>
+          <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Sparkles size={20} color="var(--primary)" />
+            AI Creative Studio
+          </h3>
           
-          {/* AI Generator UI */}
-          <div className="glass-panel" style={{ padding: '28px' }}>
-            <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Sparkles size={20} color="var(--primary)" />
-              AI Creative Studio
-            </h3>
-            
-            <div className="form-group">
-              <label className="form-label">Creative Prompt</label>
-              <textarea 
-                className="form-control"
-                rows={3}
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="e.g. Modern abstract technology workspace graphic background with blue and violet neon lights"
-                style={{ width: '100%' }}
-              />
+          <div className="form-group">
+            <label className="form-label">Creative Prompt</label>
+            <textarea 
+              className="form-control"
+              rows={3}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="e.g. Modern abstract technology workspace graphic background with blue and violet neon lights"
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Select Generator Engine</label>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
+              <button 
+                type="button"
+                className={`btn ${engine === 'VERTEX_IMAGEN' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setEngine('VERTEX_IMAGEN')}
+                style={{ flex: 1, fontSize: '12px' }}
+              >
+                Vertex Imagen 3
+              </button>
+              <button 
+                type="button"
+                className={`btn ${engine === 'OPENAI_DALLE' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setEngine('OPENAI_DALLE')}
+                style={{ flex: 1, fontSize: '12px' }}
+              >
+                DALL-E 3
+              </button>
+              <button 
+                type="button"
+                className={`btn ${engine === 'VERTEX_VEO' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setEngine('VERTEX_VEO')}
+                style={{ flex: 1, fontSize: '12px' }}
+              >
+                Google Veo (Video)
+              </button>
             </div>
+          </div>
 
-            <div className="form-group">
-              <label className="form-label">Select Generator Engine</label>
-              <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
-                <button 
-                  type="button"
-                  className={`btn ${engine === 'VERTEX_IMAGEN' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => setEngine('VERTEX_IMAGEN')}
-                  style={{ flex: 1, fontSize: '12px' }}
-                >
-                  Vertex Imagen 3
-                </button>
-                <button 
-                  type="button"
-                  className={`btn ${engine === 'OPENAI_DALLE' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => setEngine('OPENAI_DALLE')}
-                  style={{ flex: 1, fontSize: '12px' }}
-                >
-                  DALL-E 3
-                </button>
-                <button 
-                  type="button"
-                  className={`btn ${engine === 'VERTEX_VEO' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => setEngine('VERTEX_VEO')}
-                  style={{ flex: 1, fontSize: '12px' }}
-                >
-                  Google Veo (Video)
-                </button>
-              </div>
-            </div>
+          <button 
+            className="btn btn-primary" 
+            onClick={handleGenerate}
+            disabled={generating}
+            style={{ width: '100%', marginTop: '12px' }}
+          >
+            {generating ? 'Generating Media...' : 'Generate Asset'}
+          </button>
 
-            <button 
-              className="btn btn-primary" 
-              onClick={handleGenerate}
-              disabled={generating}
-              style={{ width: '100%', marginTop: '12px' }}
-            >
-              {generating ? 'Generating Media...' : 'Generate Asset'}
-            </button>
-
-            {/* Generated Canvas */}
-            {generatedAsset && (
-              <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(0,0,0,0.3)', borderRadius: '12px' }}>
-                <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', height: '240px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {generatedAsset.asset_type === 'IMAGE' ? (
-                    <img src={generatedAsset.url} alt="Generated Asset" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-                  ) : (
-                    <video src={generatedAsset.url} controls style={{ maxWidth: '100%', maxHeight: '100%' }} />
-                  )}
-                </div>
-
-                <div className="form-group" style={{ marginTop: '16px' }}>
-                  <label className="form-label">Asset File Name (Google Ads Asset Name)</label>
-                  <input 
-                    type="text" 
-                    className="form-control"
-                    value={assetName}
-                    onChange={(e) => setAssetName(e.target.value)}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-                  <button className="btn btn-primary" onClick={handleUpload} style={{ flex: 1 }}>
-                    <Upload size={14} /> Upload to Ads API
-                  </button>
-                  <a 
-                    href={generatedAsset.url} 
-                    download={assetName} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="btn btn-secondary" 
-                    style={{ flex: 1, textDecoration: 'none' }}
-                  >
-                    <Download size={14} /> Download File
-                  </a>
-                </div>
-
-                {uploadStatus && (
-                  <p style={{ marginTop: '12px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' }}>
-                    {uploadStatus}
-                  </p>
+          {/* Generated Canvas */}
+          {generatedAsset && (
+            <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(0,0,0,0.3)', borderRadius: '12px' }}>
+              <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', height: '240px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {generatedAsset.asset_type === 'IMAGE' ? (
+                  <img src={generatedAsset.url} alt="Generated Asset" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                ) : (
+                  <video src={generatedAsset.url} controls style={{ maxWidth: '100%', maxHeight: '100%' }} />
                 )}
               </div>
-            )}
-          </div>
 
-          {/* Placements exclusions Panel */}
-          <div className="glass-panel" style={{ padding: '24px' }}>
-            <h3 style={{ marginBottom: '16px' }}>Performance Max Placements Audit</h3>
-            <div className="custom-table-container" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-              <table className="custom-table" style={{ fontSize: '13px' }}>
-                <thead>
-                  <tr>
-                    <th>Placement Domain</th>
-                    <th>Clicks</th>
-                    <th>Conversions</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {placements.map((p, i) => (
-                    <tr key={i}>
-                      <td>{p.placement_name}</td>
-                      <td>{p.clicks}</td>
-                      <td>{p.conversions}</td>
-                      <td>
-                        <button 
-                          className="btn btn-danger" 
-                          onClick={() => handlePlacementExclusion(p.placement_name)}
-                          style={{ padding: '4px 8px', fontSize: '11px' }}
-                        >
-                          Exclude
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="form-group" style={{ marginTop: '16px' }}>
+                <label className="form-label">Asset File Name (Google Ads Asset Name)</label>
+                <input 
+                  type="text" 
+                  className="form-control"
+                  value={assetName}
+                  onChange={(e) => setAssetName(e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                <button className="btn btn-primary" onClick={handleUpload} style={{ flex: 1 }}>
+                  <Upload size={14} /> Upload to Ads API
+                </button>
+                <a 
+                  href={generatedAsset.url} 
+                  download={assetName} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="btn btn-secondary" 
+                  style={{ flex: 1, textDecoration: 'none' }}
+                >
+                  <Download size={14} /> Download File
+                </a>
+              </div>
+
+              {uploadStatus && (
+                <p style={{ marginTop: '12px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' }}>
+                  {uploadStatus}
+                </p>
+              )}
             </div>
-          </div>
-
+          )}
         </div>
 
-        {/* Right Column: RSA Headlines/Descriptions Labels */}
+        {/* 2. Ad Copy Rating Labels Table */}
         <div className="glass-panel" style={{ padding: '28px' }}>
           <h3 style={{ marginBottom: '20px' }}>Ad Copy Rating Labels (Responsive Search Ads)</h3>
           <div className="custom-table-container">
@@ -307,6 +267,47 @@ export default function CreativeStudio({ dateRange }: { dateRange: string }) {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* 3. Performance Max Placements exclusions Panel (stacked at bottom) */}
+        <div className="glass-panel" style={{ padding: '24px' }}>
+          <h3 style={{ marginBottom: '16px' }}>Performance Max Placements Audit</h3>
+          {placements.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: '14px' }}>
+              No active Performance Max campaigns or placements detected.
+            </div>
+          ) : (
+            <div className="custom-table-container" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              <table className="custom-table" style={{ fontSize: '13px' }}>
+                <thead>
+                  <tr>
+                    <th>Placement Domain</th>
+                    <th>Clicks</th>
+                    <th>Conversions</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {placements.map((p, i) => (
+                    <tr key={i}>
+                      <td>{p.placement_name}</td>
+                      <td>{p.clicks}</td>
+                      <td>{p.conversions}</td>
+                      <td>
+                        <button 
+                          className="btn btn-danger" 
+                          onClick={() => handlePlacementExclusion(p.placement_name)}
+                          style={{ padding: '4px 8px', fontSize: '11px' }}
+                        >
+                          Exclude
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
       </div>
