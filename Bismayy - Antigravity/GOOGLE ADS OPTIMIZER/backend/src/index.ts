@@ -430,7 +430,7 @@ app.get('*', (req, res, next) => {
 
 // Start listening
 const PORT = process.env.PORT || config.PORT;
-app.listen(Number(PORT), '0.0.0.0', async () => {
+app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`Google Ads Optimizer backend server running on http://0.0.0.0:${PORT}`);
-  await bootstrap();
+  bootstrap();
 });
