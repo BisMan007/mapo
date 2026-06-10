@@ -34,6 +34,7 @@ export async function getAccessToken(): Promise<string> {
         refresh_token: config.GOOGLE_ADS_REFRESH_TOKEN,
         grant_type: 'refresh_token',
       },
+      timeout: 10000,
     });
 
     cachedAccessToken = response.data.access_token;
@@ -95,7 +96,7 @@ export async function searchGoogleAds(query: string): Promise<any[]> {
     const response = await axios.post(
       url,
       { query },
-      { headers }
+      { headers, timeout: 10000 }
     );
     return response.data.results || [];
   } catch (error: any) {
@@ -135,7 +136,7 @@ export async function mutateGoogleAds(operations: any[]): Promise<any> {
     const response = await axios.post(
       url,
       { mutateOperations: operations },
-      { headers }
+      { headers, timeout: 10000 }
     );
     return response.data;
   } catch (error: any) {

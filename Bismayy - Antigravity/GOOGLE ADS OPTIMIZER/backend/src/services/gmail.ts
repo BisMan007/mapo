@@ -25,6 +25,9 @@ export async function sendGmailDigest(to: string, subject: string, htmlContent: 
           user: config.SMTP_USER,
           pass: config.SMTP_PASSWORD,
         },
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
+        socketTimeout: 5000,
       });
 
       await transporter.sendMail({
